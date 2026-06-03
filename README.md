@@ -111,7 +111,33 @@ becomes the owner/admin of the Official Updates server.
 | Channel | `servers/{serverId}/channels/{channelId}` | named, ordered |
 | Message | `…/channels/{channelId}/messages/{id}` | real-time |
 
-## Deploy to the web (optional)
+## Deploy with Netlify + GitHub
+
+Firebase still runs the back end (Auth, Firestore, Storage). Netlify just hosts
+the built front end and redeploys automatically on every push to GitHub.
+
+1. **Push this repo to GitHub** (already done if you're reading this on GitHub).
+2. Go to [app.netlify.com](https://app.netlify.com) → **Add new site → Import an
+   existing project** → connect GitHub → pick this repo.
+3. Build settings are read from `netlify.toml` automatically:
+   - Build command: `npm run build`
+   - Publish directory: `dist`
+4. **Add your Firebase config as environment variables** (Site settings →
+   Environment variables). Add the same `VITE_*` keys from `.env`:
+   - `VITE_FIREBASE_API_KEY`
+   - `VITE_FIREBASE_AUTH_DOMAIN`
+   - `VITE_FIREBASE_PROJECT_ID`
+   - `VITE_FIREBASE_STORAGE_BUCKET`
+   - `VITE_FIREBASE_MESSAGING_SENDER_ID`
+   - `VITE_FIREBASE_APP_ID`
+5. **Deploy.** Every push to your default branch now triggers a new build.
+6. In Firebase Console → **Authentication → Settings → Authorized domains**,
+   add your Netlify domain (e.g. `your-site.netlify.app`) so login works there.
+
+> Security rules still have to be deployed to Firebase separately (see step 4 of
+> Setup) — Netlify only hosts the static front end.
+
+### Deploy to Firebase Hosting instead (optional)
 
 ```bash
 npm run build

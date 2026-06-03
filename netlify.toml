@@ -1,0 +1,15 @@
+# Netlify build settings for Staff Chat (Vite SPA).
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Single-page app: send every route to index.html so React Router can handle it
+# (otherwise refreshing on /servers/... gives a 404).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
