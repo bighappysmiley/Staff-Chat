@@ -108,7 +108,12 @@ export async function ensureOfficialServerMembership(profile) {
   if (isFirst) {
     await setDoc(
       doc(db, 'servers', OFFICIAL_SERVER_ID, 'channels', 'announcements'),
-      { name: 'announcements', position: 0, createdAt: serverTimestamp() }
+      {
+        name: 'announcements',
+        position: 0,
+        announcementOnly: true,
+        createdAt: serverTimestamp(),
+      }
     );
   }
 }
@@ -234,13 +239,22 @@ export async function removeMember(serverId, uid) {
 
 // ---- channels --------------------------------------------------------------
 
-export async function createChannel(serverId, name, position = 0) {
+export async function createChannel(serverId, name, position = 0, announcementOnly = false) {
   const ref = await addDoc(collection(db, 'servers', serverId, 'channels'), {
     name: name.trim().toLowerCase().replace(/\s+/g, '-'),
     position,
+    announcementOnly,
     createdAt: serverTimestamp(),
   });
   return ref.id;
+}
+
+// Toggle a channel between open (everyone posts) and announcement-only
+// (admins/mods post, members read).
+export async function setChannelAnnouncementOnly(serverId, channelId, value) {
+  await updateDoc(doc(db, 'servers', serverId, 'channels', channelId), {
+    announcementOnly: value,
+  });
 }
 
 export async function renameChannel(serverId, channelId, name) {

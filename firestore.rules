@@ -47,6 +47,13 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/servers/$(serverId)).data.ownerId;
     }
 
+    // True when a channel is flagged announcement-only (members may read but not
+    // post). Defaults to false for channels created before this flag existed.
+    function channelIsAnnouncementOnly(serverId, channelId) {
+      return get(/databases/$(database)/documents/servers/$(serverId)/channels/$(channelId))
+        .data.get('announcementOnly', false) == true;
+    }
+
     // ---- users ---------------------------------------------------------
 
     match /users/{userId} {
@@ -122,9 +129,15 @@ service cloud.firestore {
         match /messages/{messageId} {
           allow read: if isMember(serverId) || isStaff();
 
-          // Members post as themselves.
+          // Members post as themselves — but in announcement-only channels,
+          // only moderators/admins/staff may post.
           allow create: if isMember(serverId)
-            && request.resource.data.authorId == request.auth.uid;
+            && request.resource.data.authorId == request.auth.uid
+            && (
+              !channelIsAnnouncementOnly(serverId, channelId)
+              || isServerMod(serverId)
+              || isStaff()
+            );
 
           // Authors may edit their own message text.
           allow update: if isSignedIn()

@@ -577,6 +577,48 @@ code {
   max-height: 160px;
   margin: 0;
 }
+.composer--locked {
+  justify-content: center;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  background: var(--bg-input);
+  margin: 0 16px 18px;
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.chat-header__badge {
+  margin-left: 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: var(--bg-active);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+/* ---- checkbox rows ---- */
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.checkbox-row input {
+  width: auto;
+  margin: 0;
+}
+.checkbox-row--inline {
+  margin-top: 0;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
 
 /* ---- member list ---- */
 .member-list {

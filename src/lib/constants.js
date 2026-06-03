@@ -25,3 +25,10 @@ export function canManageServer(role) {
 export function canModerate(role) {
   return role === ROLES.ADMIN || role === ROLES.MODERATOR;
 }
+
+// Announcement-only channels are read-only for regular members; only admins and
+// moderators can post.
+export function canPostInChannel(role, channel) {
+  if (channel?.announcementOnly) return canModerate(role);
+  return true;
+}

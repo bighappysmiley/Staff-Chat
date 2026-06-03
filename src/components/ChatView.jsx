@@ -3,7 +3,7 @@ import Message from './Message.jsx';
 import MessageComposer from './MessageComposer.jsx';
 import { useMessages } from '../hooks/useFirestore.js';
 import { sendMessage, deleteMessage } from '../lib/data.js';
-import { canModerate } from '../lib/constants.js';
+import { canModerate, canPostInChannel } from '../lib/constants.js';
 
 export default function ChatView({ server, channel, profile, myRole }) {
   const { messages, loading } = useMessages(server?.id, channel?.id);
@@ -31,12 +31,18 @@ export default function ChatView({ server, channel, profile, myRole }) {
   }
 
   const canModerateHere = canModerate(myRole);
+  const canPost = canPostInChannel(myRole, channel);
 
   return (
     <main className="chat-view">
       <header className="chat-header">
         <span className="channel-hash">#</span>
         <span className="chat-header__name">{channel.name}</span>
+        {channel.announcementOnly && (
+          <span className="chat-header__badge" title="Only admins and moderators can post here">
+            🔒 Announcements
+          </span>
+        )}
       </header>
 
       <div className="messages">
@@ -58,10 +64,16 @@ export default function ChatView({ server, channel, profile, myRole }) {
         <div ref={bottomRef} />
       </div>
 
-      <MessageComposer
-        placeholder={`Message #${channel.name}`}
-        onSend={handleSend}
-      />
+      {canPost ? (
+        <MessageComposer
+          placeholder={`Message #${channel.name}`}
+          onSend={handleSend}
+        />
+      ) : (
+        <div className="composer composer--locked">
+          🔒 Only admins and moderators can post in #{channel.name}.
+        </div>
+      )}
     </main>
   );
 }

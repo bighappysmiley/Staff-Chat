@@ -7,6 +7,7 @@ import {
   updateMemberRole,
   removeMember,
   deleteChannel,
+  setChannelAnnouncementOnly,
   generateInviteCode,
 } from '../lib/data.js';
 import { resizeImageToDataUrl } from '../lib/image.js';
@@ -173,9 +174,19 @@ function ChannelsTab({ server, channels }) {
     <div className="settings-pane">
       {channels.map((c) => (
         <div key={c.id} className="channel-manage-row">
-          <span>
+          <span className="channel-manage-row__name">
             <span className="channel-hash">#</span> {c.name}
           </span>
+          <label className="checkbox-row checkbox-row--inline" title="Only admins & moderators can post">
+            <input
+              type="checkbox"
+              checked={Boolean(c.announcementOnly)}
+              onChange={(e) =>
+                setChannelAnnouncementOnly(server.id, c.id, e.target.checked)
+              }
+            />
+            <span>Announcement only</span>
+          </label>
           <button
             className="icon-btn icon-btn--sm"
             title="Delete channel"

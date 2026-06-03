@@ -4,6 +4,7 @@ import { createChannel } from '../lib/data.js';
 
 export default function CreateChannelModal({ serverId, nextPosition, onClose, onDone }) {
   const [name, setName] = useState('');
+  const [announcementOnly, setAnnouncementOnly] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -16,7 +17,7 @@ export default function CreateChannelModal({ serverId, nextPosition, onClose, on
     setBusy(true);
     setError('');
     try {
-      const channelId = await createChannel(serverId, name, nextPosition);
+      const channelId = await createChannel(serverId, name, nextPosition, announcementOnly);
       onDone(channelId);
     } catch (err) {
       setError(err.message || 'Could not create channel.');
@@ -44,6 +45,14 @@ export default function CreateChannelModal({ serverId, nextPosition, onClose, on
           </div>
         </label>
         <p className="muted small">Spaces become dashes, e.g. “Team Updates” → team-updates.</p>
+        <label className="checkbox-row">
+          <input
+            type="checkbox"
+            checked={announcementOnly}
+            onChange={(e) => setAnnouncementOnly(e.target.checked)}
+          />
+          <span>Announcement only — only admins &amp; moderators can post</span>
+        </label>
         <button className="btn btn--primary btn--full" disabled={busy}>
           {busy ? 'Creating…' : 'Create channel'}
         </button>
