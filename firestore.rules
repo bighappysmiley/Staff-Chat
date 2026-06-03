@@ -1,0 +1,141 @@
+rules_version = '2';
+
+// Staff Chat — Firestore security rules.
+// These are the real enforcement layer: the client UI hides things by role,
+// but these rules make sure a user can't do something their role forbids even
+// if they call the API directly.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- helpers -------------------------------------------------------
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // BigHappySmiley staff — global super-users. The `isStaff` flag can only be
+    // set out-of-band (Firebase console or the make-staff script), never by the
+    // client, so this can't be self-granted.
+    function isStaff() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isStaff == true;
+    }
+
+    function memberPath(serverId) {
+      return /databases/$(database)/documents/servers/$(serverId)/members/$(request.auth.uid);
+    }
+
+    function isMember(serverId) {
+      return isSignedIn() && exists(memberPath(serverId));
+    }
+
+    function myRole(serverId) {
+      return get(memberPath(serverId)).data.role;
+    }
+
+    function isServerAdmin(serverId) {
+      return isMember(serverId) && myRole(serverId) == 'admin';
+    }
+
+    function isServerMod(serverId) {
+      return isMember(serverId) && myRole(serverId) in ['admin', 'moderator'];
+    }
+
+    function serverOwner(serverId) {
+      return get(/databases/$(database)/documents/servers/$(serverId)).data.ownerId;
+    }
+
+    // ---- users ---------------------------------------------------------
+
+    match /users/{userId} {
+      // Any signed-in user can read profiles (needed to render names/avatars).
+      allow read: if isSignedIn();
+
+      // You may create only your own profile, and you can't make yourself staff.
+      allow create: if isSignedIn()
+        && request.auth.uid == userId
+        && request.resource.data.isStaff == false;
+
+      // You may edit your own profile, but not flip your own staff flag.
+      allow update: if isSignedIn()
+        && request.auth.uid == userId
+        && request.resource.data.isStaff == resource.data.isStaff;
+
+      allow delete: if false;
+
+      // The user's own list of servers (powers the left rail). Owned by the user.
+      match /memberships/{serverId} {
+        allow read, write: if isSignedIn()
+          && (request.auth.uid == userId || isStaff());
+      }
+    }
+
+    // ---- servers -------------------------------------------------------
+
+    match /servers/{serverId} {
+      // Readable by any signed-in user. This is what lets someone look a server
+      // up by invite code before they've joined. Server contents (members,
+      // channels, messages) are locked down separately below.
+      allow read: if isSignedIn();
+
+      // Anyone signed in can create a server they own.
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid;
+
+      // Only a server admin (or staff) can edit server settings; the official
+      // server can't be deleted.
+      allow update: if isServerAdmin(serverId) || isStaff();
+      allow delete: if (isServerAdmin(serverId) || isStaff()) && serverId != 'official-updates';
+
+      // ---- members -----------------------------------------------------
+      match /members/{memberId} {
+        allow read: if isMember(serverId) || isStaff();
+
+        // The server owner adds themselves as the first admin (done right after
+        // creating the server doc, so the get() below can see it).
+        allow create: if isSignedIn()
+          && request.auth.uid == memberId
+          && serverOwner(serverId) == request.auth.uid;
+
+        // Anyone signed in can add THEMSELVES as a plain member (join by invite).
+        allow create: if isSignedIn()
+          && request.auth.uid == memberId
+          && request.resource.data.uid == memberId
+          && request.resource.data.role == 'member';
+
+        // Admins/staff can add or re-role members.
+        allow create, update: if isServerAdmin(serverId) || isStaff();
+
+        // You can remove yourself; admins/staff can remove anyone.
+        allow delete: if request.auth.uid == memberId
+          || isServerAdmin(serverId) || isStaff();
+      }
+
+      // ---- channels ----------------------------------------------------
+      match /channels/{channelId} {
+        allow read: if isMember(serverId) || isStaff();
+        allow create, update, delete: if isServerAdmin(serverId) || isStaff();
+
+        // ---- messages --------------------------------------------------
+        match /messages/{messageId} {
+          allow read: if isMember(serverId) || isStaff();
+
+          // Members post as themselves.
+          allow create: if isMember(serverId)
+            && request.resource.data.authorId == request.auth.uid;
+
+          // Authors may edit their own message text.
+          allow update: if isSignedIn()
+            && resource.data.authorId == request.auth.uid
+            && request.resource.data.authorId == resource.data.authorId;
+
+          // Authors delete their own; moderators/admins/staff delete any.
+          allow delete: if resource.data.authorId == request.auth.uid
+            || isServerMod(serverId) || isStaff();
+        }
+      }
+    }
+  }
+}

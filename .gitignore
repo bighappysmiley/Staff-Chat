@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Local env / secrets — never commit real Firebase config or service accounts
+.env
+.env.local
+.env.*.local
+serviceAccount.json
+*-service-account.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor / OS
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Firebase
+.firebase/
+firebase-debug.log
