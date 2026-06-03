@@ -7,9 +7,9 @@ import {
   updateMemberRole,
   removeMember,
   deleteChannel,
-  uploadServerIcon,
   generateInviteCode,
 } from '../lib/data.js';
+import { resizeImageToDataUrl } from '../lib/image.js';
 import { ROLES, ROLE_ORDER, ROLE_LABELS } from '../lib/constants.js';
 
 // Admin-only server management: rename + icon + invite code, member roles, and
@@ -62,8 +62,8 @@ function GeneralTab({ server }) {
     if (!file) return;
     setBusy(true);
     try {
-      const url = await uploadServerIcon(server.id, file);
-      await updateServerMeta(server.id, { icon: url });
+      const dataUrl = await resizeImageToDataUrl(file);
+      await updateServerMeta(server.id, { icon: dataUrl });
       setStatus('Icon updated.');
     } finally {
       setBusy(false);

@@ -18,15 +18,17 @@ lands in **Official Updates**, where BigHappySmiley staff post product news.
 - **Auto-join Official Updates** on signup.
 - **Roles per server**: `admin` (full control), `moderator` (can delete any
   message), `member` (chat).
-- **Real-time chat** with usernames and profile pictures.
+- **Real-time chat** with usernames and profile pictures (images are shrunk in
+  the browser and stored in Firestore — no paid storage add-on needed).
 - **Staff admin dashboard** for BigHappySmiley staff — overview of all users and
   servers.
-- Security enforced server-side by Firestore + Storage rules (in this repo).
+- Security enforced server-side by Firestore rules (in this repo).
 
 ## Tech
 
-React + Vite on the front end; Firebase (Authentication, Firestore, Storage,
-optional Hosting) on the back end. No server to run yourself.
+React + Vite on the front end; Firebase (Authentication, Firestore, optional
+Hosting) on the back end. Everything used is on Firebase's **free Spark plan** —
+no billing required. No server to run yourself.
 
 ---
 
@@ -44,9 +46,11 @@ npm install
    create a project.
 2. **Authentication** → Get started → enable **Email/Password**.
 3. **Firestore Database** → Create database (start in production mode).
-4. **Storage** → Get started (for profile pictures / server icons).
-5. **Project settings → General → Your apps** → add a **Web app** and copy the
+4. **Project settings → General → Your apps** → add a **Web app** and copy the
    config object.
+
+   (No Storage step needed — profile pictures are stored in Firestore, so the
+   free Spark plan is enough.)
 
 ### 3. Configure environment
 
@@ -59,14 +63,14 @@ safe to ship in client code — the security rules do the real protecting.)
 
 ### 4. Deploy security rules
 
-The rules in `firestore.rules` and `storage.rules` are what enforce the
-permission model. Deploy them with the Firebase CLI:
+The rules in `firestore.rules` are what enforce the permission model. Deploy
+them with the Firebase CLI:
 
 ```bash
 npm install -g firebase-tools
 firebase login
 firebase use --add            # pick your project
-firebase deploy --only firestore:rules,storage
+firebase deploy --only firestore:rules
 ```
 
 ### 5. Run it
@@ -113,8 +117,8 @@ becomes the owner/admin of the Official Updates server.
 
 ## Deploy with Netlify + GitHub
 
-Firebase still runs the back end (Auth, Firestore, Storage). Netlify just hosts
-the built front end and redeploys automatically on every push to GitHub.
+Firebase still runs the back end (Auth, Firestore). Netlify just hosts the
+built front end and redeploys automatically on every push to GitHub.
 
 1. **Push this repo to GitHub** (already done if you're reading this on GitHub).
 2. Go to [app.netlify.com](https://app.netlify.com) → **Add new site → Import an
@@ -149,5 +153,6 @@ firebase deploy --only hosting
 ## Roadmap / not yet built
 
 This is the MVP scaffold. Natural next steps: message editing UI, typing
-indicators, file attachments in chat, threaded replies, and tighter Storage
-rules for server icons (admin-only via a Firestore lookup).
+indicators, file attachments in chat, and threaded replies. (Large file
+attachments would need a real storage backend — a free option like Cloudinary
+or Supabase Storage — since Firestore docs are capped at 1 MB.)

@@ -2,7 +2,8 @@ import { useState } from 'react';
 import Modal from './Modal.jsx';
 import Avatar from './Avatar.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-import { updateUserProfile, uploadAvatar } from '../lib/data.js';
+import { updateUserProfile } from '../lib/data.js';
+import { resizeImageToDataUrl } from '../lib/image.js';
 
 // Lightweight profile editing — username and avatar only, by design.
 export default function ProfileSettingsModal({ onClose }) {
@@ -31,8 +32,8 @@ export default function ProfileSettingsModal({ onClose }) {
     setBusy(true);
     setStatus('');
     try {
-      const url = await uploadAvatar(profile.uid, file);
-      await updateUserProfile(profile.uid, { photoURL: url });
+      const dataUrl = await resizeImageToDataUrl(file);
+      await updateUserProfile(profile.uid, { photoURL: dataUrl });
       setStatus('Photo updated.');
     } catch (err) {
       setStatus(err.message || 'Upload failed.');

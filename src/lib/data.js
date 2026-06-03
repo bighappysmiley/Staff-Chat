@@ -12,8 +12,7 @@ import {
   limit,
   serverTimestamp,
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from './firebase.js';
+import { db } from './firebase.js';
 import {
   OFFICIAL_SERVER_ID,
   OFFICIAL_SERVER_NAME,
@@ -118,12 +117,6 @@ export async function updateUserProfile(uid, fields) {
   await updateDoc(doc(db, 'users', uid), fields);
 }
 
-export async function uploadAvatar(uid, file) {
-  const storageRef = ref(storage, `avatars/${uid}/${Date.now()}-${file.name}`);
-  await uploadBytes(storageRef, file);
-  return getDownloadURL(storageRef);
-}
-
 // ---- servers ---------------------------------------------------------------
 
 export async function createServer(profile, { name, icon = null }) {
@@ -209,12 +202,6 @@ export async function updateServerMeta(serverId, fields) {
       );
     })
   );
-}
-
-export async function uploadServerIcon(serverId, file) {
-  const storageRef = ref(storage, `servers/${serverId}/${Date.now()}-${file.name}`);
-  await uploadBytes(storageRef, file);
-  return getDownloadURL(storageRef);
 }
 
 // ---- members ---------------------------------------------------------------
