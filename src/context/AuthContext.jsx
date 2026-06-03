@@ -72,13 +72,29 @@ export function AuthProvider({ children }) {
 
   async function login({ email, password }) {
     const cred = await signInWithEmailAndPassword(auth, email, password);
-    // Self-heal: make sure existing accounts are in Official Updates (e.g. ones
-    // created before auto-join worked). Best-effort — never block login on it.
+    // Self-heal on login (best-effort — never block sign-in on it):
+    //  1. Recreate a missing Firestore profile (e.g. an Auth account whose user
+    //     doc was deleted, or one created before profile-writing worked).
+    //  2. Make sure the account is in Official Updates.
     try {
+      const fallbackName =
+        cred.user.displayName || cred.user.email?.split('@')[0] || 'User';
       const snap = await getDoc(doc(db, 'users', cred.user.uid));
-      if (snap.exists()) await ensureOfficialServerMembership(snap.data());
+      let profileData;
+      if (snap.exists()) {
+        profileData = snap.data();
+      } else {
+        profileData = {
+          uid: cred.user.uid,
+          email: cred.user.email,
+          username: fallbackName,
+          photoURL: null,
+        };
+        await createUserProfile(profileData);
+      }
+      await ensureOfficialServerMembership(profileData);
     } catch (err) {
-      console.warn('Official Updates sync skipped:', err);
+      console.warn('Account sync skipped:', err);
     }
     return cred.user;
   }
