@@ -72,8 +72,10 @@ async function writeMembership(profile, server, role) {
 export async function ensureOfficialServerMembership(profile) {
   const serverRef = doc(db, 'servers', OFFICIAL_SERVER_ID);
   const snap = await getDoc(serverRef);
+  const isFirst = !snap.exists();
 
-  if (!snap.exists()) {
+  if (isFirst) {
+    // First account ever: create the shared server (this user becomes owner).
     await setDoc(serverRef, {
       name: OFFICIAL_SERVER_NAME,
       icon: null,
@@ -82,22 +84,33 @@ export async function ensureOfficialServerMembership(profile) {
       isOfficial: true,
       createdAt: serverTimestamp(),
     });
-    await setDoc(doc(db, 'servers', OFFICIAL_SERVER_ID, 'channels', 'announcements'), {
-      name: 'announcements',
-      position: 0,
-      createdAt: serverTimestamp(),
-    });
+  } else {
+    // Server exists — if we're already a member, do nothing. (Important: never
+    // re-write the membership here, or we'd clobber an admin's role back to
+    // 'member' on every login.)
+    const me = await getDoc(
+      doc(db, 'servers', OFFICIAL_SERVER_ID, 'members', profile.uid)
+    );
+    if (me.exists()) return;
   }
 
   const server = {
     id: OFFICIAL_SERVER_ID,
     name: OFFICIAL_SERVER_NAME,
-    icon: snap.exists() ? snap.data().icon : null,
+    icon: isFirst ? null : snap.data().icon,
     isOfficial: true,
   };
-  // The creator owns it (admin); everyone else is a member.
-  const role = !snap.exists() ? ROLES.ADMIN : ROLES.MEMBER;
-  await writeMembership(profile, server, role);
+  // The creator owns it (admin); everyone else joins as a member.
+  await writeMembership(profile, server, isFirst ? ROLES.ADMIN : ROLES.MEMBER);
+
+  // Only now that the creator is an admin member can the rules allow creating
+  // the default channel.
+  if (isFirst) {
+    await setDoc(
+      doc(db, 'servers', OFFICIAL_SERVER_ID, 'channels', 'announcements'),
+      { name: 'announcements', position: 0, createdAt: serverTimestamp() }
+    );
+  }
 }
 
 // ---- profiles --------------------------------------------------------------

@@ -6,7 +6,7 @@ import {
   updateProfile,
   onAuthStateChanged,
 } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase.js';
 import {
   createUserProfile,
@@ -70,8 +70,17 @@ export function AuthProvider({ children }) {
     return cred.user;
   }
 
-  function login({ email, password }) {
-    return signInWithEmailAndPassword(auth, email, password);
+  async function login({ email, password }) {
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    // Self-heal: make sure existing accounts are in Official Updates (e.g. ones
+    // created before auto-join worked). Best-effort — never block login on it.
+    try {
+      const snap = await getDoc(doc(db, 'users', cred.user.uid));
+      if (snap.exists()) await ensureOfficialServerMembership(snap.data());
+    } catch (err) {
+      console.warn('Official Updates sync skipped:', err);
+    }
+    return cred.user;
   }
 
   function logout() {
