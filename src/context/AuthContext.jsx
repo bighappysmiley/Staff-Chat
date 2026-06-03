@@ -61,12 +61,17 @@ export function AuthProvider({ children }) {
       username,
       photoURL: null,
     });
-    // Drop them into Official Updates immediately.
-    await ensureOfficialServerMembership({
-      uid: cred.user.uid,
-      username,
-      photoURL: null,
-    });
+    // Drop them into Official Updates immediately. Best-effort: never fail the
+    // whole signup over this — login self-heals membership if it didn't take.
+    try {
+      await ensureOfficialServerMembership({
+        uid: cred.user.uid,
+        username,
+        photoURL: null,
+      });
+    } catch (err) {
+      console.warn('Official Updates auto-join skipped:', err);
+    }
     return cred.user;
   }
 

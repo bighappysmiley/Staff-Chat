@@ -98,7 +98,11 @@ service cloud.firestore {
 
       // ---- members -----------------------------------------------------
       match /members/{memberId} {
-        allow read: if isMember(serverId) || isStaff();
+        // Members can see the roster; anyone can read THEIR OWN membership doc
+        // (needed to check whether they've joined before auto-joining).
+        allow read: if isMember(serverId)
+          || isStaff()
+          || request.auth.uid == memberId;
 
         // The server owner adds themselves as the first admin (done right after
         // creating the server doc, so the get() below can see it).
