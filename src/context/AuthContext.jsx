@@ -75,23 +75,21 @@ export function AuthProvider({ children }) {
     return cred.user;
   }
 
-  async function login({ email, password }) {
-    const cred = await signInWithEmailAndPassword(auth, email, password);
-    // Self-heal on login (best-effort — never block sign-in on it):
-    //  1. Recreate a missing Firestore profile (e.g. an Auth account whose user
-    //     doc was deleted, or one created before profile-writing worked).
-    //  2. Make sure the account is in Official Updates.
+  // Background repair after sign-in: recreate a missing Firestore profile and
+  // make sure the account is in Official Updates. Runs fire-and-forget so it can
+  // NEVER block or fail the actual sign-in.
+  async function healAccount(user) {
     try {
       const fallbackName =
-        cred.user.displayName || cred.user.email?.split('@')[0] || 'User';
-      const snap = await getDoc(doc(db, 'users', cred.user.uid));
+        user.displayName || user.email?.split('@')[0] || 'User';
+      const snap = await getDoc(doc(db, 'users', user.uid));
       let profileData;
       if (snap.exists()) {
         profileData = snap.data();
       } else {
         profileData = {
-          uid: cred.user.uid,
-          email: cred.user.email,
+          uid: user.uid,
+          email: user.email,
           username: fallbackName,
           photoURL: null,
         };
@@ -101,6 +99,11 @@ export function AuthProvider({ children }) {
     } catch (err) {
       console.warn('Account sync skipped:', err);
     }
+  }
+
+  async function login({ email, password }) {
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    void healAccount(cred.user); // don't await — never block sign-in
     return cred.user;
   }
 
