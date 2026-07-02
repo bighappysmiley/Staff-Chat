@@ -63,22 +63,32 @@ export function useServer(serverId) {
 }
 
 // The signed-in user's membership doc (their role) for one server.
+// `loading` distinguishes "still checking" from "definitely not a member".
 export function useMyMembership(serverId, uid) {
   const [membership, setMembership] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!serverId || !uid) {
       setMembership(null);
+      setLoading(false);
       return undefined;
     }
+    setLoading(true);
     return onSnapshot(
       doc(db, 'servers', serverId, 'members', uid),
-      (snap) => setMembership(snap.exists() ? snap.data() : null),
-      () => setMembership(null)
+      (snap) => {
+        setMembership(snap.exists() ? snap.data() : null);
+        setLoading(false);
+      },
+      () => {
+        setMembership(null);
+        setLoading(false);
+      }
     );
   }, [serverId, uid]);
 
-  return membership;
+  return { membership, loading };
 }
 
 // Live channel list for a server, ordered.
@@ -148,7 +158,14 @@ export function useMessages(serverId, channelId) {
     return onSnapshot(
       q,
       (snap) => {
-        setMessages(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        // 'estimate' fills in a local time for just-sent messages while the
+        // server timestamp is pending, so new messages don't flicker undated.
+        setMessages(
+          snap.docs.map((d) => ({
+            id: d.id,
+            ...d.data({ serverTimestamps: 'estimate' }),
+          }))
+        );
         setLoading(false);
       },
       () => setLoading(false)

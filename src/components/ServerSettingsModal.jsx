@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Modal from './Modal.jsx';
 import Avatar from './Avatar.jsx';
 import { useMembers, useChannels } from '../hooks/useFirestore.js';
@@ -11,7 +11,8 @@ import {
   generateInviteCode,
 } from '../lib/data.js';
 import { resizeImageToDataUrl } from '../lib/image.js';
-import { ROLES, ROLE_ORDER, ROLE_LABELS } from '../lib/constants.js';
+import { fileLabelA11yProps } from '../lib/a11y.js';
+import { ROLE_ORDER, ROLE_LABELS } from '../lib/constants.js';
 
 // Admin-only server management: rename + icon + invite code, member roles, and
 // channel cleanup.
@@ -47,6 +48,8 @@ function GeneralTab({ server }) {
   const [name, setName] = useState(server.name);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState('');
+  const [copyStatus, setCopyStatus] = useState(null); // null | 'copied' | 'failed'
+  const iconInputRef = useRef(null);
 
   async function saveName() {
     setBusy(true);
@@ -81,6 +84,17 @@ function GeneralTab({ server }) {
     }
   }
 
+  async function copyCode() {
+    try {
+      if (!navigator.clipboard) throw new Error('Clipboard API unavailable');
+      await navigator.clipboard.writeText(server.inviteCode);
+      setCopyStatus('copied');
+    } catch {
+      setCopyStatus('failed');
+    }
+    setTimeout(() => setCopyStatus(null), 1800);
+  }
+
   return (
     <div className="settings-pane">
       <label>
@@ -90,9 +104,15 @@ function GeneralTab({ server }) {
 
       <div className="settings-row">
         <Avatar name={server.name} src={server.icon} size={48} />
-        <label className="btn btn--ghost file-btn">
+        <label className="btn btn--ghost file-btn" {...fileLabelA11yProps(iconInputRef)}>
           Change icon
-          <input type="file" accept="image/*" onChange={onIconChange} hidden />
+          <input
+            ref={iconInputRef}
+            type="file"
+            accept="image/*"
+            onChange={onIconChange}
+            hidden
+          />
         </label>
       </div>
 
@@ -102,11 +122,10 @@ function GeneralTab({ server }) {
           <div className="invite-code">{server.inviteCode}</div>
         </div>
         <div className="invite-actions">
-          <button
-            className="btn btn--ghost"
-            onClick={() => navigator.clipboard?.writeText(server.inviteCode)}
-          >
-            Copy
+          <button className="btn btn--ghost" onClick={copyCode}>
+            {copyStatus === 'copied' && '✓ Copied!'}
+            {copyStatus === 'failed' && '⚠ Copy failed'}
+            {!copyStatus && 'Copy'}
           </button>
           <button className="btn btn--ghost" onClick={regenerateCode} disabled={busy}>
             Regenerate
@@ -153,6 +172,7 @@ function MembersTab({ server, members, currentUid }) {
             <button
               className="icon-btn icon-btn--sm"
               title="Remove from server"
+              aria-label={`Remove ${m.username} from ${server.name}`}
               disabled={isOwner || isSelf}
               onClick={() => {
                 if (window.confirm(`Remove ${m.username} from ${server.name}?`)) {
@@ -190,6 +210,7 @@ function ChannelsTab({ server, channels }) {
           <button
             className="icon-btn icon-btn--sm"
             title="Delete channel"
+            aria-label={`Delete channel #${c.name}`}
             disabled={channels.length <= 1}
             onClick={() => {
               if (window.confirm(`Delete #${c.name}? Messages will be lost.`)) {

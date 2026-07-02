@@ -4,7 +4,8 @@ import { isFirebaseConfigured } from './lib/firebase.js';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
-import Dashboard from './pages/Dashboard.jsx';
+import Home from './pages/Home.jsx';
+import ServerView from './pages/ServerView.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import SetupNotice from './components/SetupNotice.jsx';
 
@@ -30,7 +31,7 @@ export default function App() {
         path="/"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <Home />
           </ProtectedRoute>
         }
       />
@@ -38,7 +39,7 @@ export default function App() {
         path="/servers/:serverId"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <ServerView />
           </ProtectedRoute>
         }
       />
@@ -46,7 +47,7 @@ export default function App() {
         path="/servers/:serverId/:channelId"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <ServerView />
           </ProtectedRoute>
         }
       />

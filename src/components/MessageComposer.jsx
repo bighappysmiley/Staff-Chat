@@ -1,9 +1,19 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 
-// The message input box. Enter sends; Shift+Enter inserts a newline.
+// The message input box. Enter sends; Shift+Enter inserts a newline. The
+// textarea grows to fit multi-line messages up to the CSS max-height, then
+// scrolls internally.
 export default function MessageComposer({ disabled, placeholder, onSend }) {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const textareaRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [text]);
 
   async function submit() {
     const value = text.trim();
@@ -27,6 +37,7 @@ export default function MessageComposer({ disabled, placeholder, onSend }) {
   return (
     <div className="composer">
       <textarea
+        ref={textareaRef}
         className="composer__input"
         rows={1}
         value={text}

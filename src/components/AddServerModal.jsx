@@ -4,9 +4,9 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { createServer, joinByInviteCode } from '../lib/data.js';
 
 // Two-in-one: create a brand new server, or join an existing one by invite code.
-export default function AddServerModal({ onClose, onDone }) {
+export default function AddServerModal({ onClose, onDone, initialTab = 'join' }) {
   const { profile } = useAuth();
-  const [tab, setTab] = useState('join');
+  const [tab, setTab] = useState(initialTab);
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
@@ -51,13 +51,13 @@ export default function AddServerModal({ onClose, onDone }) {
           className={`tab ${tab === 'join' ? 'is-active' : ''}`}
           onClick={() => setTab('join')}
         >
-          Join with code
+          Join with a code
         </button>
         <button
           className={`tab ${tab === 'create' ? 'is-active' : ''}`}
           onClick={() => setTab('create')}
         >
-          Create a server
+          Create new
         </button>
       </div>
 

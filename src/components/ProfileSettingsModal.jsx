@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Modal from './Modal.jsx';
 import Avatar from './Avatar.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { updateUserProfile } from '../lib/data.js';
 import { resizeImageToDataUrl } from '../lib/image.js';
+import { fileLabelA11yProps } from '../lib/a11y.js';
 
 // Lightweight profile editing — username and avatar only, by design.
 export default function ProfileSettingsModal({ onClose }) {
@@ -11,6 +12,7 @@ export default function ProfileSettingsModal({ onClose }) {
   const [username, setUsername] = useState(profile.username || '');
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState('');
+  const avatarInputRef = useRef(null);
 
   async function saveUsername() {
     if (username.trim().length < 2) {
@@ -47,9 +49,18 @@ export default function ProfileSettingsModal({ onClose }) {
       <div className="settings-pane">
         <div className="settings-row">
           <Avatar name={username} src={profile.photoURL} size={64} />
-          <label className="btn btn--ghost file-btn">
+          <label
+            className="btn btn--ghost file-btn"
+            {...fileLabelA11yProps(avatarInputRef)}
+          >
             Change photo
-            <input type="file" accept="image/*" onChange={onAvatarChange} hidden />
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              onChange={onAvatarChange}
+              hidden
+            />
           </label>
         </div>
 

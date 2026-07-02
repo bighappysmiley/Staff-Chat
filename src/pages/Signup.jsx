@@ -45,7 +45,7 @@ export default function Signup() {
     <div className="auth-page">
       <form className="auth-card" onSubmit={onSubmit}>
         <div className="auth-brand">
-          <div className="auth-logo" />
+          <div className="logo-mark logo-mark--lg" aria-hidden="true" />
           <h1>Create your account</h1>
           <p className="muted">Join your team on Staff Chat</p>
         </div>

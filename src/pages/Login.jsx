@@ -33,7 +33,7 @@ export default function Login() {
     <div className="auth-page">
       <form className="auth-card" onSubmit={onSubmit}>
         <div className="auth-brand">
-          <div className="auth-logo" />
+          <div className="logo-mark logo-mark--lg" aria-hidden="true" />
           <h1>Welcome back</h1>
           <p className="muted">Sign in to Staff Chat</p>
         </div>
