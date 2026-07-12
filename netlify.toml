@@ -1,0 +1,5 @@
+# Static splash page — no build step needed. This overrides whatever build
+# command/publish directory is cached in the Netlify UI from before the
+# project was paused (it was previously a Vite app with a build step).
+[build]
+  publish = "."
