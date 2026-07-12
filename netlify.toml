@@ -1,5 +1,9 @@
-# Static splash page — no build step needed. This overrides whatever build
-# command/publish directory is cached in the Netlify UI from before the
-# project was paused (it was previously a Vite app with a build step).
+# Static splash page — no build step needed.
+#
+# An empty/absent `command` here does NOT clear a build command saved in the
+# Netlify dashboard from before (it just falls back to that old value) — so we
+# explicitly set a harmless no-op command to override the leftover "npm run
+# build" from when this was a Vite app with a package.json.
 [build]
+  command = "echo 'static site — nothing to build'"
   publish = "."
